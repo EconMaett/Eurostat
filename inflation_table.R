@@ -6,12 +6,16 @@ library(countrycode)
 library(gt)
 library(gtExtras)
 
-data <- get_eurostat("prc_hicp_manr", filters = list(coicop = "CP00"))
+data <- get_eurostat("prc_hicp_manr", filters = list(coicop = "CP00")) |> 
+  mutate(time = date(paste0(time, "-01")))
 
 ea.avg <- data |>
   filter(geo == "EA") |>
   slice_max(time, n = 1) |>
   pull(values)
+
+
+# Make the date column a date
 
 findat <- data |>
   left_join(codelist |> select(eurostat, country.name.de), by = c("geo" = "eurostat")) |>
@@ -35,7 +39,7 @@ plotdat |>
   fmt_date(columns = time, rows = everything(), date_style = "yM", locale = "en") |>
   fmt_flag(columns = geo, height = "1.5em") |>
   gt_plt_sparkline(
-    column = trend, same_limit = F,
+    column = trend, same_limit = FALSE,
     palette = c(rep("black", 2), rep("transparent", 3))
   ) |>
   cols_label(
@@ -61,10 +65,13 @@ plotdat |>
   tab_source_note(source_note = html("<p style='text-align:right;'>Daten: Eurostat. Grafik: @matschnetzer</p>")) |>
   gt_theme_538() |>
   tab_options(
-    heading.title.font.size = 24, footnotes.padding = 0,
+    heading.title.font.size = 24, 
+    footnotes.padding = 0,
     footnotes.font.size = 10,
     source_notes.font.size = 10
   ) |>
   gtsave(filename = "eu_inflation_table.html")
+
+print(plotdat)
 
 # END
